@@ -3,7 +3,7 @@
 """Image data base class for pascal voc"""
 
 import cv2
-import os 
+import os
 import numpy as np
 import xml.etree.ElementTree as ET
 
@@ -19,10 +19,10 @@ class pascal_voc(imdb):
     self._data_root_path = data_path
     self._data_path = os.path.join(self._data_root_path, 'VOC' + self._year)
     self._classes = self.mc.CLASS_NAMES
-    self._class_to_idx = dict(zip(self.classes, xrange(self.num_classes)))
+    self._class_to_idx = dict(zip(self.classes, range(self.num_classes)))
 
     # a list of string indices of images in the directory
-    self._image_idx = self._load_image_set_idx() 
+    self._image_idx = self._load_image_set_idx()
     # a dict of image_idx -> [[cx, cy, w, h, cls_idx]]. x,y,w,h are not divided by
     # the image width and height
     self._rois = self._load_pascal_annotation()
@@ -83,7 +83,7 @@ class pascal_voc(imdb):
     Args:
       eval_dir: directory to write evaluation logs
       global_step: step of the checkpoint
-      all_boxes: all_boxes[cls][image] = N x 5 arrays of 
+      all_boxes: all_boxes[cls][image] = N x 5 arrays of
         [xmin, ymin, xmax, ymax, score]
     Returns:
       aps: array of average precisions.
@@ -101,9 +101,9 @@ class pascal_voc(imdb):
         for im_idx, index in enumerate(self._image_idx):
           dets = all_boxes[cls_idx][im_idx]
           # VOC expects 1-based indices
-          for k in xrange(len(dets)):
+          for k in range(len(dets)):
             f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.
-                format(index, dets[k][-1], 
+                format(index, dets[k][-1],
                        dets[k][0]+1, dets[k][1]+1,
                        dets[k][2]+1, dets[k][3]+1)
             )
@@ -131,7 +131,7 @@ class pascal_voc(imdb):
           filename, annopath, imagesetfile, cls, cachedir, ovthresh=0.5,
           use_07_metric=use_07_metric)
       aps += [ap]
-      print ('{:s}: AP = {:.4f}'.format(cls, ap))
+      print('{:s}: AP = {:.4f}'.format(cls, ap))
 
-    print ('Mean AP = {:.4f}'.format(np.mean(aps)))
+    print('Mean AP = {:.4f}'.format(np.mean(aps)))
     return aps, self._classes

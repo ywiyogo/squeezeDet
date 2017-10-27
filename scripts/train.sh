@@ -49,7 +49,7 @@ while test $# -gt 0; do
   esac
 done
 
-case "$NET" in 
+case "$NET" in
   "squeezeDet")
     export PRETRAINED_MODEL_PATH="./data/SqueezeNet/squeezenet_v1.1.pkl"
     ;;
@@ -69,13 +69,26 @@ case "$NET" in
 esac
 
 
+# python ./src/train.py \
+#   --dataset=KITTI \
+#   --pretrained_model_path=$PRETRAINED_MODEL_PATH \
+#   --data_path=/media/yongkie/YSDC/KITTI \
+#   --image_set=train \
+#   --train_dir="$TRAIN_DIR/train" \
+#   --net=$NET \
+#   --summary_step=100 \
+#   --checkpoint_step=500 \
+#   --gpu=$GPUID
+
+#python src/train.py --dataset=KITTI --pretrained_model_path=./data/SqueezeNet/squeezenet_v1.1.pkl --data_path=../dataset/KITTI --image_set=train --train_dir="/tmp/logs/SqueezeDet/train" --net="squeezeDet" --summary_step=10 --checkpoint_step=50
+
 python ./src/train.py \
-  --dataset=KITTI \
+  --dataset=BOSCH \
   --pretrained_model_path=$PRETRAINED_MODEL_PATH \
-  --data_path=./data/KITTI \
+  --data_path=/media/yongkie/YSDC/dataset_train_rgb_y2 \
   --image_set=train \
   --train_dir="$TRAIN_DIR/train" \
   --net=$NET \
-  --summary_step=100 \
-  --checkpoint_step=500 \
+  --summary_step=1 \
+  --checkpoint_step=1 \
   --gpu=$GPUID

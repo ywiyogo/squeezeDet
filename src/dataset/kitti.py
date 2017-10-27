@@ -3,7 +3,7 @@
 """Image data base class for kitti"""
 
 import cv2
-import os 
+import os
 import numpy as np
 import subprocess
 
@@ -18,10 +18,10 @@ class kitti(imdb):
     self._image_path = os.path.join(self._data_root_path, 'training', 'image_2')
     self._label_path = os.path.join(self._data_root_path, 'training', 'label_2')
     self._classes = self.mc.CLASS_NAMES
-    self._class_to_idx = dict(zip(self.classes, xrange(self.num_classes)))
+    self._class_to_idx = dict(zip(self.classes, range(self.num_classes)))
 
     # a list of string indices of images in the directory
-    self._image_idx = self._load_image_set_idx() 
+    self._image_idx = self._load_image_set_idx()
     # a dict of image_idx -> [[cx, cy, w, h, cls_idx]]. x,y,w,h are not divided by
     # the image width and height
     self._rois = self._load_kitti_annotation()
@@ -67,6 +67,7 @@ class kitti(imdb):
     idx2annotation = {}
     for index in self._image_idx:
       filename = os.path.join(self._label_path, index+'.txt')
+
       with open(filename, 'r') as f:
         lines = f.readlines()
       f.close()
@@ -102,7 +103,7 @@ class kitti(imdb):
     Args:
       eval_dir: directory to write evaluation logs
       global_step: step of the checkpoint
-      all_boxes: all_boxes[cls][image] = N x 5 arrays of 
+      all_boxes: all_boxes[cls][image] = N x 5 arrays of
         [xmin, ymin, xmax, ymax, score]
     Returns:
       aps: array of average precisions.
@@ -118,7 +119,7 @@ class kitti(imdb):
       with open(filename, 'wt') as f:
         for cls_idx, cls in enumerate(self._classes):
           dets = all_boxes[cls_idx][im_idx]
-          for k in xrange(len(dets)):
+          for k in range(len(dets)):
             f.write(
                 '{:s} -1 -1 0.0 {:.2f} {:.2f} {:.2f} {:.2f} 0.0 0.0 0.0 0.0 0.0 '
                 '0.0 0.0 {:.3f}\n'.format(
@@ -186,7 +187,7 @@ class kitti(imdb):
               idx, error_type,
               det[0]-det[2]/2., det[1]-det[3]/2.,
               det[0]+det[2]/2., det[1]+det[3]/2.,
-              self._classes[int(det[4])], 
+              self._classes[int(det[4])],
               score
           )
       )

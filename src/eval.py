@@ -13,7 +13,7 @@ import sys
 import time
 
 import numpy as np
-from six.moves import xrange
+from six.moves import range
 import tensorflow as tf
 
 from config import *
@@ -60,13 +60,13 @@ def eval_once(
 
     num_images = len(imdb.image_idx)
 
-    all_boxes = [[[] for _ in xrange(num_images)]
-                 for _ in xrange(imdb.num_classes)]
+    all_boxes = [[[] for _ in range(num_images)]
+                 for _ in range(imdb.num_classes)]
 
     _t = {'im_detect': Timer(), 'im_read': Timer(), 'misc': Timer()}
 
     num_detection = 0.0
-    for i in xrange(num_images):
+    for i in range(num_images):
       _t['im_read'].tic()
       images, scales = imdb.read_image_batch(shuffle=False)
       _t['im_read'].toc()
@@ -205,8 +205,8 @@ def evaluate():
     saver = tf.train.Saver(model.model_params)
 
     summary_writer = tf.summary.FileWriter(FLAGS.eval_dir, g)
-    
-    ckpts = set() 
+
+    ckpts = set()
     while True:
       if FLAGS.run_once:
         # When run_once is true, checkpoint_path should point to the exact

@@ -18,7 +18,7 @@ import tensorflow as tf
 import threading
 
 from config import *
-from dataset import pascal_voc, kitti
+from dataset import pascal_voc, kitti, bosch_tl
 from utils.util import sparse_to_dense, bgr_to_rgb, bbox_transform
 from nets import *
 
@@ -35,7 +35,7 @@ tf.app.flags.DEFINE_string('year', '2007',
 tf.app.flags.DEFINE_string('train_dir', '/tmp/bichen/logs/squeezeDet/train',
                             """Directory where to write event logs """
                             """and checkpoint.""")
-tf.app.flags.DEFINE_integer('max_steps', 1000000,
+tf.app.flags.DEFINE_integer('max_steps', 100,
                             """Maximum number of batches to run.""")
 tf.app.flags.DEFINE_string('net', 'squeezeDet',
                            """Neural net architecture. """)
@@ -101,8 +101,8 @@ def _viz_prediction_result(model, images, bboxes, labels, batch_det_bbox,
 
 def train():
   """Train SqueezeDet model"""
-  assert FLAGS.dataset == 'KITTI', \
-      'Currently only support KITTI dataset'
+  #assert FLAGS.dataset == 'KITTI', \
+  #    'Currently only support KITTI dataset'
 
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
 
@@ -122,7 +122,13 @@ def train():
       mc.PRETRAINED_MODEL_PATH = FLAGS.pretrained_model_path
       model = ResNet50ConvDet(mc)
     elif FLAGS.net == 'squeezeDet':
-      mc = kitti_squeezeDet_config()
+      if FLAGS.dataset == 'KITTI':
+        mc = kitti_squeezeDet_config()
+      elif FLAGS.dataset == 'BOSCH':
+        mc = bosch_squeezeDet_config()
+      else:
+        print("Dataset %s not supported" % FLAGS.dataset )
+        exit()
       mc.IS_TRAINING = True
       mc.PRETRAINED_MODEL_PATH = FLAGS.pretrained_model_path
       model = SqueezeDet(mc)
@@ -132,7 +138,11 @@ def train():
       mc.PRETRAINED_MODEL_PATH = FLAGS.pretrained_model_path
       model = SqueezeDetPlus(mc)
 
-    imdb = kitti(FLAGS.image_set, FLAGS.data_path, mc)
+    # Acquiring the dataset and labels
+    if FLAGS.dataset == 'BOSCH':
+      imdb = bosch_tl(FLAGS.image_set, FLAGS.data_path, mc)
+    elif FLAGS.dataset == 'KITTI':
+      imdb = kitti(FLAGS.image_set, FLAGS.data_path, mc)
 
     # save model size, flops, activations by layers
     with open(os.path.join(FLAGS.train_dir, 'model_metrics.txt'), 'w') as f:
@@ -162,9 +172,10 @@ def train():
 
     def _load_data(load_to_placeholder=True):
       # read batch input
+      print('READY TO BATCH')
       image_per_batch, label_per_batch, box_delta_per_batch, aidx_per_batch, \
           bbox_per_batch = imdb.read_batch()
-
+      print('BATCH COMPLETE')
       label_indices, bbox_indices, box_delta_values, mask_indices, box_values, \
           = [], [], [], [], []
       aidx_set = set()
@@ -232,7 +243,7 @@ def train():
             print ("added to the queue")
         if mc.DEBUG_MODE:
           print ("Finished enqueue")
-      except Exception, e:
+      except Exception as e:
         coord.request_stop(e)
 
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
@@ -262,7 +273,7 @@ def train():
     threads = tf.train.start_queue_runners(coord=coord, sess=sess)
     run_options = tf.RunOptions(timeout_in_ms=60000)
 
-    # try: 
+    # try:
     for step in xrange(FLAGS.max_steps):
       if coord.should_stop():
         sess.run(model.FIFOQueue.close(cancel_pending_enqueues=True))

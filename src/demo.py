@@ -76,7 +76,7 @@ def video_demo():
 
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
       saver.restore(sess, FLAGS.checkpoint)
-
+      summary_writer = tf.summary.FileWriter(os.getcwd()+ "/logs", graph=sess.graph)
       times = {}
       count = 0
       while cap.isOpened():
@@ -103,7 +103,7 @@ def video_demo():
 
         t_detect = time.time()
         times['detect']= t_detect - t_reshape
-        
+
         # Filter
         final_boxes, final_probs, final_class = model.filter_prediction(
             det_boxes[0], det_probs[0], det_class[0])
@@ -182,7 +182,7 @@ def image_demo():
 
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
       saver.restore(sess, FLAGS.checkpoint)
-
+      summary_writer = tf.summary.FileWriter(os.getcwd()+ "/logs", graph=sess.graph)
       for f in glob.iglob(FLAGS.input_path):
         im = cv2.imread(f)
         im = im.astype(np.float32, copy=False)

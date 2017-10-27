@@ -103,11 +103,11 @@ class imdb(object):
     Returns:
       image_per_batch: images. Shape: batch_size x width x height x [b, g, r]
       label_per_batch: labels. Shape: batch_size x object_num
-      delta_per_batch: bounding box deltas. Shape: batch_size x object_num x 
+      delta_per_batch: bounding box deltas. Shape: batch_size x object_num x
           [dx ,dy, dw, dh]
       aidx_per_batch: index of anchors that are responsible for prediction.
           Shape: batch_size x object_num
-      bbox_per_batch: scaled bounding boxes. Shape: batch_size x object_num x 
+      bbox_per_batch: scaled bounding boxes. Shape: batch_size x object_num x
           [cx, cy, w, h]
     """
     mc = self.mc
@@ -140,15 +140,21 @@ class imdb(object):
 
     for idx in batch_idx:
       # load the image
-      im = cv2.imread(self._image_path_at(idx)).astype(np.float32, copy=False)
+      #print("Path: ", self._image_path_at(idx))
+      img = cv2.imread(self._image_path_at(idx))
+      assert not img is None, "path: %s " % self._image_path_at(idx)
+      im = img.astype(np.float32, copy=False)
+
       im -= mc.BGR_MEANS
       orig_h, orig_w, _ = [float(v) for v in im.shape]
 
       # load annotations
+
+      #print("type batch idx: ", type(idx))
       label_per_batch.append([b[4] for b in self._rois[idx][:]])
       gt_bbox = np.array([[b[0], b[1], b[2], b[3]] for b in self._rois[idx][:]])
-
-      if mc.DATA_AUGMENTATION:
+      #print("GT  box: ", gt_bbox)
+      if mc.DATA_AUGMENTATION and len(gt_bbox)>0:
         assert mc.DRIFT_X >= 0 and mc.DRIFT_Y > 0, \
             'mc.DRIFT_X and mc.DRIFT_Y must be >= 0'
 
@@ -186,10 +192,12 @@ class imdb(object):
       image_per_batch.append(im)
 
       # scale annotation
-      x_scale = mc.IMAGE_WIDTH/orig_w
-      y_scale = mc.IMAGE_HEIGHT/orig_h
-      gt_bbox[:, 0::2] = gt_bbox[:, 0::2]*x_scale
-      gt_bbox[:, 1::2] = gt_bbox[:, 1::2]*y_scale
+      if len(gt_bbox)>0:
+        x_scale = mc.IMAGE_WIDTH/orig_w
+        y_scale = mc.IMAGE_HEIGHT/orig_h
+        gt_bbox[:, 0::2] = gt_bbox[:, 0::2]*x_scale
+        gt_bbox[:, 1::2] = gt_bbox[:, 1::2]*y_scale
+
       bbox_per_batch.append(gt_bbox)
 
       aidx_per_image, delta_per_image = [], []
@@ -215,7 +223,7 @@ class imdb(object):
               num_objects += 1
             break
 
-        if aidx == len(mc.ANCHOR_BOX): 
+        if aidx == len(mc.ANCHOR_BOX):
           # even the largeset available overlap is 0, thus, choose one with the
           # smallest square distance
           dist = np.sum(np.square(gt_bbox[i] - mc.ANCHOR_BOX), axis=1)
@@ -245,8 +253,7 @@ class imdb(object):
       print ('number of objects: {}'.format(num_objects))
       print ('number of objects with 0 iou: {}'.format(num_zero_iou_obj))
 
-    return image_per_batch, label_per_batch, delta_per_batch, \
-        aidx_per_batch, bbox_per_batch
+    return image_per_batch, label_per_batch, delta_per_batch, aidx_per_batch, bbox_per_batch
 
   def evaluate_detections(self):
     raise NotImplementedError
@@ -267,14 +274,14 @@ class imdb(object):
       error_type = obj[1]
       if error_type not in dets_per_type:
         dets_per_type[error_type] = [{
-            'im_idx':obj[0], 
+            'im_idx':obj[0],
             'bbox':[float(obj[2]), float(obj[3]), float(obj[4]), float(obj[5])],
             'class':obj[6],
             'score': float(obj[7])
         }]
       else:
         dets_per_type[error_type].append({
-            'im_idx':obj[0], 
+            'im_idx':obj[0],
             'bbox':[float(obj[2]), float(obj[3]), float(obj[4]), float(obj[5])],
             'class':obj[6],
             'score': float(obj[7])
@@ -284,7 +291,7 @@ class imdb(object):
     # Randomly select some detections and plot them
     COLOR = (200, 200, 0)
     for error_type, dets in dets_per_type.iteritems():
-      det_im_dir = os.path.join(output_image_dir, error_type)
+      det_im_dir = os._image_path_at.join(output_image_dir, error_type)
       if os.path.exists(det_im_dir):
         shutil.rmtree(det_im_dir)
       os.makedirs(det_im_dir)
@@ -295,7 +302,7 @@ class imdb(object):
             os.path.join(image_dir, det['im_idx']+image_format))
         draw = ImageDraw.Draw(im)
         draw.rectangle(det['bbox'], outline=COLOR)
-        draw.text((det['bbox'][0], det['bbox'][1]), 
+        draw.text((det['bbox'][0], det['bbox'][1]),
                   '{:s} ({:.2f})'.format(det['class'], det['score']),
                   fill=COLOR)
         out_im_path = os.path.join(det_im_dir, str(i)+image_format)

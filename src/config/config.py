@@ -7,8 +7,8 @@ import os.path as osp
 import numpy as np
 from easydict import EasyDict as edict
 
-def base_model_config(dataset='PASCAL_VOC'):
-  assert dataset.upper()=='PASCAL_VOC' or dataset.upper()=='KITTI', \
+def base_model_config(dataset='BOSCH'):
+  assert dataset.upper()=='BOSCH' or dataset.upper()=='PASCAL_VOC' or dataset.upper()=='KITTI', \
       'Currently only support PASCAL_VOC or KITTI dataset'
 
   cfg = edict()
@@ -24,9 +24,11 @@ def base_model_config(dataset='PASCAL_VOC'):
                        'sofa', 'train', 'tvmonitor')
   elif cfg.DATASET == 'KITTI':
     cfg.CLASS_NAMES = ('car', 'pedestrian', 'cyclist')
+  elif cfg.DATASET == 'BOSCH':
+    cfg.CLASS_NAMES = ('Red', 'Yellow', 'Green', "off")
 
   # number of categories to classify
-  cfg.CLASSES = len(cfg.CLASS_NAMES)    
+  cfg.CLASSES = len(cfg.CLASS_NAMES)
 
   # ROI pooling output width
   cfg.GRID_POOL_WIDTH = 7
@@ -79,7 +81,7 @@ def base_model_config(dataset='PASCAL_VOC'):
 
   # loss coefficient for bounding box regression
   cfg.LOSS_COEF_BBOX = 10.0
-                           
+
   # reduce step size after this many steps
   cfg.DECAY_STEPS = 10000
 
