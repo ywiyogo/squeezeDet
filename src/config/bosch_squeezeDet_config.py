@@ -29,7 +29,7 @@ def bosch_squeezeDet_config():
   mc.PLOT_PROB_THRESH      = 0.4
   mc.NMS_THRESH            = 0.4
   mc.PROB_THRESH           = 0.005
-  mc.TOP_N_DETECTION       = 64
+  mc.TOP_N_DETECTION       = 10
 
   mc.DATA_AUGMENTATION     = True
   mc.DRIFT_X               = 150
@@ -48,9 +48,9 @@ def set_anchors(mc):
   B = 9
   anchor_shapes = np.reshape(
       [np.array(
-          [[  36.,  37.], [ 366., 174.], [ 115.,  59.],
-           [ 162.,  87.], [  38.,  90.], [ 258., 173.],
-           [ 224., 108.], [  78., 170.], [  72.,  43.]])] * H * W,
+          [[ 15,  28], [  32,  36], [  48,  90],
+           [ 72,  43], [  78, 140], [ 120, 220],
+           [ 115, 59], [ 162,  87], [ 258, 173]])] * H * W,
       (H, W, B, 2)
   )
   center_x = np.reshape(

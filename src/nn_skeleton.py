@@ -104,7 +104,7 @@ class ModelSkeleton:
 
     self.FIFOQueue = tf.FIFOQueue(
         capacity=mc.QUEUE_CAPACITY,
-        dtypes=[tf.float32, tf.float32, tf.float32, 
+        dtypes=[tf.float32, tf.float32, tf.float32,
                 tf.float32, tf.float32],
         shapes=[[mc.IMAGE_HEIGHT, mc.IMAGE_WIDTH, 3],
                 [mc.ANCHORS, 1],
@@ -121,7 +121,7 @@ class ModelSkeleton:
     self.image_input, self.input_mask, self.box_delta_input, \
         self.box_input, self.labels = tf.train.batch(
             self.FIFOQueue.dequeue(), batch_size=mc.BATCH_SIZE,
-            capacity=mc.QUEUE_CAPACITY) 
+            capacity=mc.QUEUE_CAPACITY)
 
     # model parameters
     self.model_params = []
@@ -158,7 +158,7 @@ class ModelSkeleton:
           [mc.BATCH_SIZE, mc.ANCHORS, mc.CLASSES],
           name='pred_class_probs'
       )
-      
+
       # confidence
       num_confidence_scores = mc.ANCHOR_PER_GRID+num_class_probs
       self.pred_conf = tf.sigmoid(
@@ -232,6 +232,7 @@ class ModelSkeleton:
             tf.minimum(mc.IMAGE_HEIGHT-1.0, ymaxs), 0.0, name='bbox_ymax')
         self._activation_summary(ymaxs, 'box_ymax')
 
+        # Used for test operation in demo.py
         self.det_boxes = tf.transpose(
             tf.stack(util.bbox_transform_inv([xmins, ymins, xmaxs, ymaxs])),
             (1, 2, 0), name='bbox'
@@ -279,6 +280,7 @@ class ModelSkeleton:
 
       self._activation_summary(probs, 'final_class_prob')
 
+      # Used for test operation in demo.py
       self.det_probs = tf.reduce_max(probs, 2, name='score')
       self.det_class = tf.argmax(probs, 2, name='class_idx')
 
@@ -303,7 +305,7 @@ class ModelSkeleton:
       input_mask = tf.reshape(self.input_mask, [mc.BATCH_SIZE, mc.ANCHORS])
       self.conf_loss = tf.reduce_mean(
           tf.reduce_sum(
-              tf.square((self.ious - self.pred_conf)) 
+              tf.square((self.ious - self.pred_conf))
               * (input_mask*mc.LOSS_COEF_CONF_POS/self.num_objects
                  +(1-input_mask)*mc.LOSS_COEF_CONF_NEG/(mc.ANCHORS-self.num_objects)),
               reduction_indices=[1]
@@ -496,7 +498,7 @@ class ModelSkeleton:
         kernel_val = np.transpose(cw[layer_name][0], [2,3,1,0])
         bias_val = cw[layer_name][1]
         # check the shape
-        if (kernel_val.shape == 
+        if (kernel_val.shape ==
               (size, size, inputs.get_shape().as_list()[-1], filters)) \
            and (bias_val.shape == (filters, )):
           use_pretrained_param = True
@@ -524,23 +526,21 @@ class ModelSkeleton:
         kernel_init = tf.contrib.layers.xavier_initializer_conv2d()
         bias_init = tf.constant_initializer(0.0)
       else:
-        kernel_init = tf.truncated_normal_initializer(
-            stddev=stddev, dtype=tf.float32)
+        kernel_init = tf.truncated_normal_initializer( stddev=stddev, dtype=tf.float32)
         bias_init = tf.constant_initializer(0.0)
 
       kernel = _variable_with_weight_decay(
           'kernels', shape=[size, size, int(channels), filters],
           wd=mc.WEIGHT_DECAY, initializer=kernel_init, trainable=(not freeze))
 
-      biases = _variable_on_device('biases', [filters], bias_init, 
-                                trainable=(not freeze))
+      biases = _variable_on_device('biases', [filters], bias_init, trainable=(not freeze))
       self.model_params += [kernel, biases]
 
       conv = tf.nn.conv2d(
           inputs, kernel, [1, stride, stride, 1], padding=padding,
           name='convolution')
       conv_bias = tf.nn.bias_add(conv, biases, name='bias_add')
-  
+
       if relu:
         out = tf.nn.relu(conv_bias, 'relu')
       else:
@@ -561,7 +561,7 @@ class ModelSkeleton:
       )
 
       return out
-  
+
   def _pooling_layer(
       self, layer_name, inputs, size, stride, padding='SAME'):
     """Pooling layer operation constructor.
@@ -577,15 +577,15 @@ class ModelSkeleton:
     """
 
     with tf.variable_scope(layer_name) as scope:
-      out =  tf.nn.max_pool(inputs, 
-                            ksize=[1, size, size, 1], 
+      out =  tf.nn.max_pool(inputs,
+                            ksize=[1, size, size, 1],
                             strides=[1, stride, stride, 1],
                             padding=padding)
       activation_size = np.prod(out.get_shape().as_list()[1:])
       self.activation_counter.append((layer_name, activation_size))
       return out
 
-  
+
   def _fc_layer(
       self, layer_name, inputs, hiddens, flatten=False, relu=True,
       xavier=False, stddev=0.001):
@@ -595,8 +595,8 @@ class ModelSkeleton:
       layer_name: layer name.
       inputs: input tensor
       hiddens: number of (hidden) neurons in this layer.
-      flatten: if true, reshape the input 4D tensor of shape 
-          (batch, height, weight, channel) into a 2D tensor with shape 
+      flatten: if true, reshape the input 4D tensor of shape
+          (batch, height, weight, channel) into a 2D tensor with shape
           (batch, -1). This is used when the input to the fully connected layer
           is output of a convolutional layer.
       relu: whether to use relu or not.
@@ -676,7 +676,7 @@ class ModelSkeleton:
           initializer=kernel_init)
       biases = _variable_on_device('biases', [hiddens], bias_init)
       self.model_params += [weights, biases]
-  
+
       outputs = tf.nn.bias_add(tf.matmul(inputs, weights), biases)
       if relu:
         outputs = tf.nn.relu(outputs, 'relu')
@@ -731,6 +731,8 @@ class ModelSkeleton:
           final_boxes.append(boxes[idx_per_class[i]])
           final_probs.append(probs[idx_per_class[i]])
           final_cls_idx.append(c)
+    print("Final probs: ", final_probs)
+    print("Final Class idx: ", final_cls_idx)
     return final_boxes, final_probs, final_cls_idx
 
   def _activation_summary(self, x, layer_name):

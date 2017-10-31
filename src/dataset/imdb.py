@@ -162,7 +162,7 @@ class imdb(object):
           # Ensures that gt boundibg box is not cutted out of the image
           max_drift_x = min(gt_bbox[:, 0] - gt_bbox[:, 2]/2.0+1)
           max_drift_y = min(gt_bbox[:, 1] - gt_bbox[:, 3]/2.0+1)
-          assert max_drift_x >= 0 and max_drift_y >= 0, 'bbox out of image'
+          assert max_drift_x >= 0 and max_drift_y >= 0, 'bbox out of image %s' % self._image_path_at(idx)
 
           dy = np.random.randint(-mc.DRIFT_Y, min(mc.DRIFT_Y+1, max_drift_y))
           dx = np.random.randint(-mc.DRIFT_X, min(mc.DRIFT_X+1, max_drift_x))

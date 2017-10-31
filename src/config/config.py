@@ -133,10 +133,10 @@ def base_model_config(dataset='BOSCH'):
   cfg.BATCH_NORM_EPSILON = 1e-5
 
   # number of threads to fetch data
-  cfg.NUM_THREAD = 4
+  cfg.NUM_THREAD = 2
 
   # capacity for FIFOQueue
-  cfg.QUEUE_CAPACITY = 100
+  cfg.QUEUE_CAPACITY = 1
 
   # indicate if the model is in training mode
   cfg.IS_TRAINING = False

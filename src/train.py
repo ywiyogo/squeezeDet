@@ -35,7 +35,7 @@ tf.app.flags.DEFINE_string('year', '2007',
 tf.app.flags.DEFINE_string('train_dir', '/tmp/bichen/logs/squeezeDet/train',
                             """Directory where to write event logs """
                             """and checkpoint.""")
-tf.app.flags.DEFINE_integer('max_steps', 100,
+tf.app.flags.DEFINE_integer('max_steps', 30,
                             """Maximum number of batches to run.""")
 tf.app.flags.DEFINE_string('net', 'squeezeDet',
                            """Neural net architecture. """)
@@ -43,7 +43,7 @@ tf.app.flags.DEFINE_string('pretrained_model_path', '',
                            """Path to the pretrained model.""")
 tf.app.flags.DEFINE_integer('summary_step', 10,
                             """Number of steps to save summary.""")
-tf.app.flags.DEFINE_integer('checkpoint_step', 1000,
+tf.app.flags.DEFINE_integer('checkpoint_step', 10,
                             """Number of steps to save summary.""")
 tf.app.flags.DEFINE_string('gpu', '0', """gpu id.""")
 
@@ -172,12 +172,14 @@ def train():
 
     def _load_data(load_to_placeholder=True):
       # read batch input
-      print('READY TO BATCH')
+
       image_per_batch, label_per_batch, box_delta_per_batch, aidx_per_batch, \
           bbox_per_batch = imdb.read_batch()
-      print('BATCH COMPLETE')
+
+
       label_indices, bbox_indices, box_delta_values, mask_indices, box_values, \
           = [], [], [], [], []
+
       aidx_set = set()
       num_discarded_labels = 0
       num_labels = 0
@@ -285,7 +287,7 @@ def train():
 
       if step % FLAGS.summary_step == 0:
         feed_dict, image_per_batch, label_per_batch, bbox_per_batch = \
-            _load_data(load_to_placeholder=False)
+            _load_data(load_to_placeholder=True)
         op_list = [
             model.train_op, model.loss, summary_op, model.det_boxes,
             model.det_probs, model.det_class, model.conf_loss,
@@ -314,7 +316,7 @@ def train():
               [model.train_op, model.loss, model.conf_loss, model.bbox_loss,
                model.class_loss], options=run_options)
         else:
-          feed_dict, _, _, _ = _load_data(load_to_placeholder=False)
+          feed_dict, _, _, _ = _load_data(load_to_placeholder=True)
           _, loss_value, conf_loss, bbox_loss, class_loss = sess.run(
               [model.train_op, model.loss, model.conf_loss, model.bbox_loss,
                model.class_loss], feed_dict=feed_dict)
