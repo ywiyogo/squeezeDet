@@ -1,15 +1,15 @@
-## _SqueezeDet:_ Unified, Small, Low Power Fully Convolutional Neural Networks for Real-Time Object Detection for Autonomous Driving
+## Traffic Light Detection using SqueezeDet
+
+This repository is forked from the original SqueezeDet [implementation](https://github.com/BichenWuUCB/squeezeDet.git). _SqueezeDet:_ Unified, Small, Low Power Fully Convolutional Neural Networks for Real-Time Object Detection for Autonomous Driving
 By Bichen Wu, Forrest Iandola, Peter H. Jin, Kurt Keutzer (UC Berkeley & DeepScale)
 
-This repository contains a tensorflow implementation of SqueezeDet, a convolutional neural network based object detector described in our paper: https://arxiv.org/abs/1612.01051. If you find this work useful for your research, please consider citing:
+Some modification compared to the original code are:
 
-    @inproceedings{squeezedet,
-        Author = {Bichen Wu and Forrest Iandola and Peter H. Jin and Kurt Keutzer},
-        Title = {SqueezeDet: Unified, Small, Low Power Fully Convolutional Neural Networks for Real-Time Object Detection for Autonomous Driving},
-        Journal = {arXiv:1612.01051},
-        Year = {2016}
-    }
-    
+* ported from Python2 to Python3
+* add some files to deal with the [Bosch small traffic light dataset](https://hci.iwr.uni-heidelberg.de/node/6132). 
+* Reduce the FIFOQueue capacity to deal with a lower performance computer and RAM.
+* Note: change `tensorflow` to `tensorflow-gpu` if you have a NVidia graphic card.
+
 ## Installation:
 
 The following instructions are written for Linux-based distros.
@@ -17,30 +17,20 @@ The following instructions are written for Linux-based distros.
 - Clone the SqueezeDet repository:
 
   ```Shell
-  git clone https://github.com/BichenWuUCB/squeezeDet.git
+  git clone https://github.com/ywiyogo/squeezeDet
   ```
   Let's call the top level directory of SqueezeDet `$SQDT_ROOT`. 
 
-- (Optional) Setup your own virtual environment.
+- Setup your own virtual environment, choose Anaconda, Virtualenvwrapper, or the virtualenv.
 
-  1. The following assumes `python` is the Python2.7 executable. Navigate to your user home directory, and create the virtual environment there.
-  
-    ```Shell
-    cd ~
-    virtualenv env --python=python
-    ```
-    
-  2. Launch the virtual environment.
-  
-    ```Shell
-    source env/bin/activate
-    ```
-    
+- Launch the virtual environment
+
 - Use pip to install required Python packages:
     
     ```Shell
     pip install -r requirements.txt
     ```
+
 ## Demo:
 - Download SqueezeDet model parameters from [here](https://www.dropbox.com/s/a6t3er8f03gdl4z/model_checkpoints.tgz?dl=0), untar it, and put it under `$SQDT_ROOT/data/` If you are using command line, type:
 
@@ -58,6 +48,7 @@ The following instructions are written for Linux-based distros.
   cd $SQDT_ROOT/
   python ./src/demo.py
   ```
+
   If the installation is correct, the detector should generate this image: ![alt text](https://github.com/BichenWuUCB/squeezeDet/blob/master/README/out_sample.png)
 
   To detect other image(s), use the flag `--input_path=./data/*.png` to point to input image(s). Input image(s) will be scaled to the resolution of 1242x375 (KITTI image resolution), so it works best when original resolution is close to that.  
@@ -65,9 +56,15 @@ The following instructions are written for Linux-based distros.
 - SqueezeDet is a real-time object detector, which can be used to detect videos. The video demo will be released later.
 
 ## Training/Validation:
+
+### BOSCH Dataset
+
+To switching the dataset, please change the input folder in `scripts/train.sh`.
+
+### KITTI Dataset
 - Download KITTI object detection dataset: [images](http://www.cvlibs.net/download.php?file=data_object_image_2.zip) and [labels](http://www.cvlibs.net/download.php?file=data_object_label_2.zip). Put them under `$SQDT_ROOT/data/KITTI/`. Unzip them, then you will get two directories:  `$SQDT_ROOT/data/KITTI/training/` and `$SQDT_ROOT/data/KITTI/testing/`. 
 
-- Now we need to split the training data into a training set and a vlidation set. 
+- Now we need to split the training data into a training set and a validation set. 
 
   ```Shell
   cd $SQDT_ROOT/data/KITTI/
@@ -137,6 +134,8 @@ The following instructions are written for Linux-based distros.
   Note that `-train_dir` in the training script should be the same as `-eval_dir` in the evaluation script to make it easy for tensorboard to load logs. 
 
   You can run two evaluation scripts to simultaneously evaluate the model on training and validation set. The training script keeps dumping checkpoint (model parameters) to the training directory once every 1000 steps (step size can be changed). Once a new checkpoint is saved, evaluation threads load the new checkpoint file and evaluate them on training and validation set. 
+
+## Analysis
 
 - Finally, to monitor training and evaluation process, you can use tensorboard by
 
